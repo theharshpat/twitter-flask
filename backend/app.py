@@ -251,6 +251,13 @@ def user_follow():
         db.session.rollback()
         return jsonify({"error": "User could not be followed"}), 400
 
+# Get current user details
+@app.route("/api/profile", methods=["GET"])
+@token_required
+def user_profile():
+    user = request.user
+    return jsonify(user.to_dict()),200
 
+    
 if __name__ == "__main__":
     app.run(debug=True)
