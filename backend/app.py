@@ -186,6 +186,26 @@ def tweet_post():
 
     return jsonify({"message": "User tweeted :D "}),200
 
+# Provide user token and feed will be returned in sorted order based on the tweet time
+# Feed contains user's tweets and followed_user tweets
+@app.route("/api/feed", methods=["GET"])
+@token_required
+def user_feed():
+    user = request.user
+    tweets_data=[]
+    tweets_data.extend(user.tweets)
+
+    for followed_user in user.following:
+        tweets_data.extend(followed_user.tweets)
+    
+    tweets_data = [ t.to_dict() for t in tweets_data]
+    tweets_data.sort(key=lambda t:t['time'], reverse=True)
+
+    for tweet in tweets_data:
+        divided_epoch= tweet["time"]/1000000
+        tweet["time"]= datetime.fromtimestamp(divided_epoch).strftime('%Y-%m-%d %H:%M:%S')
+
+    return jsonify(tweets_data),200
 
 if __name__ == "__main__":
     app.run(debug=True)
