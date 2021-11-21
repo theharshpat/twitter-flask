@@ -28,10 +28,10 @@ pip install -r requirements.txt
 
 ### Usage
 
-After activating the virtual environment, run the server with:
+- After activating the virtual environment, run the server with:
 ```
 python app.py
 ```
 
-You will be able to access all APIs with base URL of
+- You will be able to access all APIs with base URL of
 `http://127.0.0.1:5000/`
