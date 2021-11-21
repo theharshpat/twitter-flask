@@ -7,7 +7,7 @@ from functools import wraps
 
 app = Flask(__name__)
 
-# Database models #################################
+# Database models #################################################################
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///twitter.db"
 db = SQLAlchemy(app)
@@ -19,6 +19,7 @@ user_to_user = db.Table('user_to_user',
                         db.Column("followed_username", db.String, db.ForeignKey(
                             "user.username"), primary_key=True)
                         )
+
 
 # User data model
 class User(db.Model):
@@ -40,6 +41,7 @@ class User(db.Model):
     def to_dict(self):
         return {"username": self.username, "following": len(self.following), "followed_by": len(self.followed_by), "tweets": len(self.tweets)}
 
+
 # Tweet data model
 class Tweet(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -58,7 +60,8 @@ class Tweet(db.Model):
         return {"username": self.username, "content": self.content, "time": self.epoch}
 
 
-# Demo data: Uncomment and execute to create the tables and add the demo data ####################
+
+# Demo data: Uncomment and execute to create the tables and populate the demo data ####################
 
 # db.drop_all()
 # db.create_all()
@@ -93,6 +96,10 @@ class Tweet(db.Model):
 # db.session.commit()
 
 
+
+# Helper functions #####################################
+
+# Returns base64 encoded token from the username
 def create_token(username):
     user_string_bytes = username.encode("utf-8")
     base64_bytes = base64.b64encode(user_string_bytes)
@@ -100,6 +107,7 @@ def create_token(username):
     return base64_string
 
 
+# Returns the username from the provided base64 encoded token
 def decode_token(token):
     base64_bytes = token.encode("utf-8")
     token_string_bytes = base64.b64decode(base64_bytes)
@@ -107,6 +115,7 @@ def decode_token(token):
     return username
 
 
+# Wrapper function to get the token from query parameters
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -119,11 +128,15 @@ def token_required(f):
     return decorated
 
 
+# API Routes #################################################################
+
+
 @app.route('/')
 def index():
     return "Twitter Flask Clone!"
 
 
+# User registration based on username and password
 @app.route("/api/register", methods=["POST"])
 def user_register():
     try:
@@ -145,6 +158,7 @@ def user_register():
         return jsonify({"error": "Username or password not provided"}), 400
 
 
+# User login route
 # Returns base64 encoded token from username, which needs to be added to protected routes in query parameters
 @app.route("/api/login", methods=["POST"])
 def user_login():
@@ -227,6 +241,7 @@ def user_list():
     user_data.sort(key=lambda u: u['username'])
     return jsonify(user_data), 200
 
+
 # Follow the user from the provided username in the request body
 @app.route("/api/follow", methods=["POST"])
 @token_required
@@ -251,6 +266,7 @@ def user_follow():
         db.session.rollback()
         return jsonify({"error": "User could not be followed"}), 400
 
+
 # Get current user details
 @app.route("/api/profile", methods=["GET"])
 @token_required
@@ -258,6 +274,6 @@ def user_profile():
     user = request.user
     return jsonify(user.to_dict()),200
 
-    
+
 if __name__ == "__main__":
     app.run(debug=True)
