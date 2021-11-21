@@ -5,9 +5,12 @@ from datetime import datetime
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///twitter.db"
 
+
+
 # Database models #################################
 
 db = SQLAlchemy(app)
+
 # Many-to-many table for User table
 user_to_user = db.Table('user_to_user',
     db.Column("follower_username", db.String, db.ForeignKey("user.username"), primary_key=True),
@@ -51,6 +54,44 @@ class Tweet(db.Model):
     
     def to_dict(self):
         return {"username":self.username, "content":self.content, "time":self.epoch}
+
+
+
+# Demo data: Uncomment and execute to create the tables and add the demo data ####################
+
+# db.drop_all()
+# db.create_all()
+
+# user = User("harsh","pass")
+# user2 = User("mihir","pass")
+# user3 = User("harshit","pass")
+
+
+# tweet= Tweet("hi ads")
+# tweet2= Tweet("heasd asdas daD23123213")
+# tweet3= Tweet("hasdf sdf easd aasdfsdas daD23123213")
+# tweet4= Tweet("sdf easd aasdfsdas daD23123213")
+
+# user.tweets=[tweet,tweet2]
+# user2.tweets=[tweet3]
+# user3.tweets=[tweet4]
+
+# user.following=[user2,user3]
+
+# db.session.add(user)
+# db.session.add(user2)
+# db.session.add(user3)
+
+# user = User.query.all()
+# print(user)
+
+# for u in user:
+#     print("Following "+ str(u.following))
+#     print("Followedby "+ str(u.followed_by))
+
+# db.session.commit()
+
+
 
 
 @app.route('/')
