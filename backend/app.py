@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+import base64
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///twitter.db"
@@ -94,6 +95,17 @@ class Tweet(db.Model):
 
 
 
+def create_token(username):
+    user_string_bytes = username.encode("utf-8")
+    base64_bytes = base64.b64encode(user_string_bytes)
+    base64_string = base64_bytes.decode("utf-8")
+    return base64_string
+
+def decode_token(token):
+    base64_bytes = token.encode("utf-8")
+    token_string_bytes = base64.b64decode(base64_bytes)
+    username = token_string_bytes.decode("utf-8")
+    return username
 
 @app.route('/')
 def index():
@@ -117,6 +129,31 @@ def user_register():
             return jsonify({"error": "Username or password not provided"}),400 # jsonify converts python vars to json
     except:
         return jsonify({"error": "Username or password not provided"}),400
+
+
+# Returns base64 encoded token from username, which needs to be added to protected routes in query parameters
+@app.route("/api/login", methods=["POST"])
+def user_login():
+    try:
+        username = request.json["username"]
+        password = request.json["password"]
+        if (username and password): # Checks if username, password are empty
+            try:
+                user = User.query.get(username)
+                if(user.password == password):
+
+                    #use jwt token for more security
+                    return jsonify({"token": create_token(username)}),200
+                else:
+                    return ({"error": "Invalid username or password"}),400
+            except Exception as e:
+                return ({"error": "Invalid username or password"}),400
+        else:
+            return jsonify({"error": "Username or password not provided"}),400 # jsonify converts python vars to json
+    except:
+        return jsonify({"error": "Username or password invalid"}),400
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)
