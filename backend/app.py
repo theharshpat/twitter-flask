@@ -2,14 +2,14 @@ from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import base64
+from functools import wraps
+
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///twitter.db"
-
-
 
 # Database models #################################
 
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///twitter.db"
 db = SQLAlchemy(app)
 
 # Many-to-many table for User table
@@ -107,6 +107,17 @@ def decode_token(token):
     username = token_string_bytes.decode("utf-8")
     return username
 
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        try:
+            request.user = User.query.get(decode_token(request.args.get("token")))
+        except:
+            return jsonify({'error' : 'Token is missing or invalid!'}), 400
+        return f(*args, **kwargs)
+    return decorated
+
+
 @app.route('/')
 def index():
     return "Twitter Flask Clone!"
@@ -153,6 +164,27 @@ def user_login():
     except:
         return jsonify({"error": "Username or password invalid"}),400
 
+
+@app.route("/api/tweet/post", methods=["POST"])
+@token_required
+def tweet_post():
+    user=request.user
+    content = request.json["content"]
+
+    if len(content)>140:
+        return jsonify({"error": "Tweet content exceeds 140 characters limit"}),400
+    
+    tweet = Tweet(content)
+    user.tweets.append(tweet)
+
+    try:
+        db.session.add(user)
+        db.session.commit()
+    except:
+        db.session.rollback()
+        return jsonify({"error": "Could not create new tweet"}),400
+
+    return jsonify({"message": "User tweeted :D "}),200
 
 
 if __name__ == "__main__":
