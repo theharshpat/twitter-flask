@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
@@ -94,9 +94,29 @@ class Tweet(db.Model):
 
 
 
+
 @app.route('/')
 def index():
     return "Twitter Flask Clone!"
+
+@app.route("/api/register", methods=["POST"])
+def user_register():
+    try:
+        username = request.json["username"]
+        password = request.json["password"]
+        if (username and password): # Checks if username, password are empty
+            try:
+                user = User(username, password) # Creates a new record
+                db.session.add(user) # Adds the record for committing
+                db.session.commit() # Saves our changes
+                return jsonify({"message": "User created successfully"}),200
+            except Exception as e:
+                db.session.rollback() # Rollback the database if user already exists
+                return ({"error": "Could not create a new user"}),400
+        else:
+            return jsonify({"error": "Username or password not provided"}),400 # jsonify converts python vars to json
+    except:
+        return jsonify({"error": "Username or password not provided"}),400
 
 if __name__ == "__main__":
     app.run(debug=True)
