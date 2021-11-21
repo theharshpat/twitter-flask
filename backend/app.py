@@ -165,6 +165,7 @@ def user_login():
         return jsonify({"error": "Username or password invalid"}),400
 
 
+# Post a tweet for the user related to the provided token
 @app.route("/api/tweet/post", methods=["POST"])
 @token_required
 def tweet_post():
@@ -206,6 +207,20 @@ def user_feed():
         tweet["time"]= datetime.fromtimestamp(divided_epoch).strftime('%Y-%m-%d %H:%M:%S')
 
     return jsonify(tweets_data),200
+
+
+# Returns list of other users sorted based on the username
+@app.route("/api/users", methods=["GET"])
+@token_required
+def user_list():
+    user = request.user
+    users = User.query.all()
+    users.remove(user)
+
+    user_data = [ u.to_dict() for u in users]
+    user_data.sort(key=lambda u:u['username'])
+    return jsonify(user_data),200
+
 
 if __name__ == "__main__":
     app.run(debug=True)
